@@ -1,8 +1,16 @@
 require('dotenv').config();
 
+// Fix for local dev: some ISPs/routers don't support SRV DNS record lookups,
+// which mongodb+srv:// requires. Force Node to use Google's DNS instead.
+// This only runs locally — Vercel's infrastructure resolves SRV records fine.
+if (process.env.NODE_ENV !== 'production') {
+  const dns = require('dns');
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+}
+
 const express = require('express');
 const cors = require('cors');
-const { connect } = require('mongoose');
+const mongoose = require('mongoose');
 
 const app = express();
 
@@ -20,6 +28,40 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// --- Database connection (cached across serverless invocations) ---
+let isConnected = false;
+
+async function connectDB() {
+  if (isConnected && mongoose.connection.readyState === 1) return;
+
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+    });
+    isConnected = true;
+    console.log('connected successfully to the database');
+  } catch (error) {
+    isConnected = false;
+    console.error('connection failed', error);
+    throw error;
+  }
+}
+
+// Try connecting once at startup (gives immediate feedback in local dev logs)
+connectDB().catch(() => {});
+
+// --- Middleware: ensure DB is connected before handling any request ---
+// This matters most on Vercel, where cold starts mean the connection
+// above may not have finished before the first request arrives.
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(503).json({ message: 'Database unavailable, please try again shortly.' });
+  }
+});
 
 // --- Routes ---
 const userRoutes = require('./routes/userRoutes.js');
@@ -39,29 +81,15 @@ app.get('/', function (req, res) {
   });
 });
 
-// --- Database connection ---
-// Cache the connection so it's reused across serverless invocations
-let isConnected = false;
-async function connectDB() {
-  if (isConnected) return;
-  try {
-    await connect(process.env.MONGODB_URI);
-    isConnected = true;
-    console.log('connected successfully to the database');
-  } catch (error) {
-    console.error('connection failed', error);
-  }
-}
-connectDB();
-
-// --- Error handler (keeps CORS headers even on errors) ---
+// --- Error handler ---
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ message: 'Internal server error' });
 });
 
 // --- Local dev only: run a real server ---
-// On Vercel, this file is imported as a serverless function handler instead.
+// On Vercel, this file is imported as a serverless function handler instead,
+// so app.listen() is skipped there (NODE_ENV is 'production' automatically).
 if (process.env.NODE_ENV !== 'production') {
   app.listen(3000, () => {
     console.log('listening on port 3000');
