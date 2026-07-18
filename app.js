@@ -96,10 +96,9 @@ if (process.env.NODE_ENV !== 'production') {
     console.log('listening on port 3000');
   });
 }
-/*
 console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
 console.log('MONGODB_URI starts with:', process.env.MONGODB_URI?.slice(0, 15));
 console.log('URI length:', process.env.MONGODB_URI?.length);
 console.log('URI JSON:', JSON.stringify(process.env.MONGODB_URI));
-*/
+
 module.exports = app;
