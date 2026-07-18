@@ -1,38 +1,33 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const { connect } = require('mongoose');
 
 const app = express();
 
-require('dotenv').config();
-
-
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
 // --- CORS setup ---
-// The frontend (Vite dev server) runs on http://localhost:5173 by default.
-// Add any other origins you deploy the frontend to (e.g. a production URL)
-// to this list, or set the FRONTEND_URL env var.
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'https://doctoruserappointmentsystem.vercel.app',
-].filter(Boolean);
+];
 
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  // The frontend sends the JWT in a raw `Authorization` header (no "Bearer " prefix),
-  // so it must be explicitly allowed here.
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());
 
+// --- Routes ---
 const userRoutes = require('./routes/userRoutes.js');
 app.use('/api', userRoutes);
+
 const adminRoutes = require('./routes/adminRoutes.js');
 app.use('/api', adminRoutes);
+
 const doctorRoutes = require('./routes/doctorRoutes.js');
 app.use('/api', doctorRoutes);
 
@@ -44,14 +39,33 @@ app.get('/', function (req, res) {
   });
 });
 
-connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('connected..susccessfully to the database');
-  })
-  .catch((error) => {
-    console.error(error, 'connection failed');
-  });
+// --- Database connection ---
+// Cache the connection so it's reused across serverless invocations
+let isConnected = false;
+async function connectDB() {
+  if (isConnected) return;
+  try {
+    await connect(process.env.MONGODB_URI);
+    isConnected = true;
+    console.log('connected successfully to the database');
+  } catch (error) {
+    console.error('connection failed', error);
+  }
+}
+connectDB();
 
-app.listen(3000, () => {
-  console.log('listening on port 3000');
+// --- Error handler (keeps CORS headers even on errors) ---
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ message: 'Internal server error' });
 });
+
+// --- Local dev only: run a real server ---
+// On Vercel, this file is imported as a serverless function handler instead.
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(3000, () => {
+    console.log('listening on port 3000');
+  });
+}
+
+module.exports = app;
