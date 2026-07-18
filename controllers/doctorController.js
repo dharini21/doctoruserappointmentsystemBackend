@@ -43,7 +43,7 @@ const loginDoctor = async (req, res) => {
     const isMatch = await bcrypt.compare(password, doctor.password)
     if (!isMatch) return res.status(400).json({message:'send invalid password'})
 
-    const token = jwt.sign({ doctor: doctor._id, role: doctor.role }, config.jwtSecret, { expiresIn: '24h' })
+    const token = jwt.sign({ doctor: doctor._id, role: doctor.role }, config.jwtSecret)
     res.json({ doctor, token })
   } catch (error) {
     console.error(error);
