@@ -16,8 +16,7 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
-'  https://doctoruserappointmentsystem.vercel.app/',
-'https://doctoruserappointmentsystem-qxnrkxzzc-sri-s-projects20.vercel.app'
+'https://doctoruserappointmentsystem.vercel.app/',
 ].filter(Boolean);
 
 app.use(cors({
