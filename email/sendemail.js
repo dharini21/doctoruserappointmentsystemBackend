@@ -1,22 +1,24 @@
+require('dotenv').config();
 const { createTransport } = require('nodemailer');
+
 const transporter = createTransport({
     service: 'Gmail',
     host: 'smtp.gmail.com',
     auth: {
-        user: 'sridharini2103@gmail.com',
-        pass: 'qyulhcyfgswgskyd',
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
 });
 
 const sendWelcomeEmail = async (email, name, password) => {
     try {
         await transporter.sendMail({
-            from: 'sridharini2103@gmail.com',
+            from: process.env.EMAIL_USER,
             to: email,
             subject: 'Welcome to Our Service!',
             text: `Hi ${name},\n\nYour account has been created successfully!\n\nYour password is: ${password}`,
         });
-        console.log(' Accound created Email sent successfully');
+        console.log('Account created Email sent successfully');
     } catch (error) {
         console.error('Error sending email:', error);
     }
@@ -25,7 +27,7 @@ const sendWelcomeEmail = async (email, name, password) => {
 const sendDeleteEmail = async (email, name) => {
     try {
         await transporter.sendMail({
-            from: 'sridharini2103@gmail.com',
+            from: process.env.EMAIL_USER,
             to: email,
             subject: 'Thankyou!',
             text: `Hi ${name},\n\nYour account has been deleted...!-_-`,
@@ -39,7 +41,7 @@ const sendDeleteEmail = async (email, name) => {
 const requestEmail = async (email, doctorName, patientName, day, date, time, reason) => {
     try {
         await transporter.sendMail({
-            from: 'sridharini2103@gmail.com',
+            from: process.env.EMAIL_USER,
             to: email,
             subject: 'New Appointment Request',
             text: `Hi Dr. ${doctorName},\n\nYou have a new appointment request from ${patientName}.\n\nDetails:\nDay:${day}\nDate: ${date}\nTime: ${time}\nReason: ${reason}\n\nPlease log in to your account to accept or decline this appointment.\n\nThank you!`,
@@ -53,28 +55,29 @@ const requestEmail = async (email, doctorName, patientName, day, date, time, rea
 const cancelEmail = async (email, doctorName, patientName, day, date, time) => {
     try {
         await transporter.sendMail({
-            from: 'sridharini2103@gmail.com',
+            from: process.env.EMAIL_USER,
             to: email,
-            subject: ' Appointment canceled',
+            subject: 'Appointment canceled',
             text: `Hi ${doctorName},\n\nYour appointment canceled.By the patient ${patientName}.\n\nDetails:\nDay:${day}\nDate: ${date}\nTime: ${time}\nThank you!`,
         });
         console.log('cancel Email sent successfully');
     } catch (error) {
         console.error('Error sending doctor request email:', error);
     }
-}
+};
 
 const updateEmail = async (email, doctorName, patientName, day, date, time, reason, status) => {
     try {
         await transporter.sendMail({
-            from: 'sridharini2103@gmail.com',
+            from: process.env.EMAIL_USER,
             to: email,
-            subject: ' Appointment updated',
-            text: `Hi ${patientName},\n\nYour appointment ${status}.By the doctor Dr. ${doctorName}.\n\nDetails:\nDay:${day}\nDate: ${date}\nTime: ${time}\n Reason: ${reason}\nThank you!`,
+            subject: 'Appointment updated',
+            text: `Hi ${patientName},\n\nYour appointment ${status}.By the doctor Dr. ${doctorName}.\n\nDetails:\nDay:${day}\nDate: ${date}\nTime: ${time}\nReason: ${reason}\nThank you!`,
         });
         console.log('status updated Email sent successfully');
     } catch (error) {
         console.error('Error sending doctor request email:', error);
     }
-}
+};
+
 module.exports = { sendWelcomeEmail, sendDeleteEmail, requestEmail, cancelEmail, updateEmail };
