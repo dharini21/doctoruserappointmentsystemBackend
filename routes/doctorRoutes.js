@@ -1,0 +1,17 @@
+const express = require('express')
+const router = express.Router()
+const { createDoctor, getDoctor, updateDoctor, deleteDoctor, loginDoctor, createAvailability, getAvailability, updateAvailability, getDoctorAppointments, updateAppointment } = require('./../controllers/doctorController.js')
+const { authorize, authenticateRole } = require('./../middlewares/authMiddleware.js')
+const Enum = require('../utils/enum.js')
+
+router.post('/create/doctor', createDoctor)
+router.post('/login/doctor', loginDoctor)
+router.get('/get/doctor/:id', authorize, authenticateRole([Enum.ROLES.DOCTOR, Enum.ROLES.ADMIN]), getDoctor)
+router.put('/update/doctor/:id', authorize, authenticateRole([Enum.ROLES.DOCTOR, Enum.ROLES.ADMIN]), updateDoctor)
+router.delete('/delete/doctor/:id', authorize, authenticateRole([Enum.ROLES.DOCTOR, Enum.ROLES.ADMIN]), deleteDoctor)
+router.post('/create/availability', authorize, authenticateRole([Enum.ROLES.DOCTOR, Enum.ROLES.ADMIN]), createAvailability)
+router.get('/get/availability/:id', authorize, authenticateRole([Enum.ROLES.DOCTOR, Enum.ROLES.ADMIN, Enum.ROLES.USER]), getAvailability)
+router.put('/update/availability/:id', authorize, authenticateRole([Enum.ROLES.DOCTOR, Enum.ROLES.ADMIN]), updateAvailability)
+router.get('/get/appointments/:id', authorize, authenticateRole([Enum.ROLES.DOCTOR, Enum.ROLES.ADMIN]), getDoctorAppointments)
+router.put('/updateAppointments/:appointmentId/:doctorId', authorize, authenticateRole([Enum.ROLES.DOCTOR, Enum.ROLES.ADMIN]), updateAppointment)
+module.exports = router;
