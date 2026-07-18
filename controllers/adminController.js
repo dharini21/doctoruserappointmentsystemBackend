@@ -40,9 +40,7 @@ const loginAdmin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(400).send("send invalid password");
 
-    const token = jwt.sign({ admin: { id: admin.id } }, config.jwtSecret, {
-      expiresIn: "24h",
-    });
+    const token = jwt.sign({ admin: { id: admin.id } }, config.jwtSecret);
     res.json({ admin, token });
   } catch (error) {
     console.error(error);
